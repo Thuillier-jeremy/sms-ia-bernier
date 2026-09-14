@@ -1,5 +1,3 @@
-import axios from "axios";
-
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
@@ -9,78 +7,79 @@ export const handler = async (event) => {
   }
 
   try {
-    const { phoneNumber, text, apiKeyMTarget, senderProfile, serviceId, apiUrl } = JSON.parse(
-      event.body
-    );
+    const { phoneNumber, text } = JSON.parse(event.body);
 
-    if (!phoneNumber || !text || !apiKeyMTarget || !senderProfile) {
+    // Récupérer les variables d'environnement
+    const username = process.env.MTARGET_USERNAME || "aerochatel";
+    const password = process.env.MTARGET_PASSWORD;
+    const serviceId = process.env.VITE_MTARGET_SERVICE_ID;
+    const sender = process.env.VITE_MTARGET_SENDER_PROFILE || "AERO 91";
+    const apiUrl = process.env.VITE_MTARGET_API_URL || "https://api-public-2.mtarget.fr/messages";
+
+    if (!phoneNumber || !text || !password) {
       return {
         statusCode: 400,
         body: JSON.stringify({
-          error: "Numéro de téléphone, texte, clé API M-Target et profil requis",
+          error: "phoneNumber, text, et password requis",
         }),
       };
     }
 
-    // Format du numéro (ajouter +33 si France)
-    let formattedPhone = phoneNumber.replace(/\s+/g, "");
-    if (formattedPhone.startsWith("0")) {
-      formattedPhone = "33" + formattedPhone.substring(1);
-    }
-    if (!formattedPhone.startsWith("+")) {
-      formattedPhone = "+" + formattedPhone;
+    // Formater le numéro : enlever tous les caractères sauf les chiffres
+    let msisdn = phoneNumber.replace(/\D/g, "");
+    
+    // Si commence par 33 (France +33), garder tel quel
+    // Si commence par 0, remplacer par 33
+    if (msisdn.startsWith("0")) {
+      msisdn = "33" + msisdn.substring(1);
     }
 
-    // apiKeyMTarget contient déjà le base64 (username:password encodé)
-    const response = await axios.post(
-      apiUrl || "https://api-public-2.mtarget.fr/messages",
-      {
-        messages: [
-          {
-            to: formattedPhone,
-            text: text,
-            sender: senderProfile,
-            serviceId: serviceId,
-          },
-        ],
-      },
-      {
-        headers: {
-          Authorization: `Basic ${apiKeyMTarget}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    console.log(`Envoi SMS à ${msisdn} via M-Target`);
 
-    console.log("M-Target response:", response.data);
+    // Construire l'URL avec les paramètres de query
+    const url = new URL(apiUrl);
+    url.searchParams.append("username", username);
+    url.searchParams.append("password", password);
+    url.searchParams.append("msisdn", msisdn);
+    url.searchParams.append("msg", text);
+    url.searchParams.append("serviceid", serviceId);
+    url.searchParams.append("sender", sender);
+
+    console.log(`URL (sans password): ${url.toString().replace(password, "***")}`);
+
+    // Faire la requête GET
+    const response = await fetch(url.toString());
+    const data = await response.json();
+
+    console.log("M-Target response:", data);
+
+    if (response.status !== 200) {
+      return {
+        statusCode: response.status,
+        body: JSON.stringify({
+          success: false,
+          error: `Erreur HTTP ${response.status}`,
+          details: data,
+        }),
+      };
+    }
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        messageId: response.data.id || response.data.message_id || "sent",
+        message: "SMS envoyé",
+        response: data,
       }),
     };
   } catch (error) {
-    console.error("Erreur M-Target:", error.response?.data || error.message);
-
-    if (error.response?.status === 401) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({
-          success: false,
-          error: "Erreur d'authentification M-Target. Vérifiez vos identifiants.",
-        }),
-      };
-    }
+    console.error("Erreur send-sms:", error);
 
     return {
-      statusCode: error.response?.status || 500,
+      statusCode: 500,
       body: JSON.stringify({
         success: false,
-        error:
-          error.response?.data?.message ||
-          "Erreur lors de l'envoi du SMS",
+        error: error.message,
       }),
     };
   }
