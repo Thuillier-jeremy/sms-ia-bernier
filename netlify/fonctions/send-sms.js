@@ -9,7 +9,7 @@ export const handler = async (event) => {
   }
 
   try {
-    const { phoneNumber, text, apiKeyMTarget, senderProfile } = JSON.parse(
+    const { phoneNumber, text, apiKeyMTarget, senderProfile, serviceId, apiUrl } = JSON.parse(
       event.body
     );
 
@@ -17,8 +17,7 @@ export const handler = async (event) => {
       return {
         statusCode: 400,
         body: JSON.stringify({
-          error:
-            "Numéro de téléphone, texte, clé API M-Target et profil d'expéditeur requis",
+          error: "Numéro de téléphone, texte, clé API M-Target et profil requis",
         }),
       };
     }
@@ -32,42 +31,45 @@ export const handler = async (event) => {
       formattedPhone = "+" + formattedPhone;
     }
 
-    // Appel API M-Target pour envoyer un SMS
-    // Adaptez les paramètres selon votre configuration M-Target
+    // apiKeyMTarget contient déjà le base64 (username:password encodé)
     const response = await axios.post(
-      "https://api.m-target.com/v1/sms/send", // URL à adapter selon votre documentation M-Target
+      apiUrl || "https://api-public-2.mtarget.fr/messages",
       {
-        phone: formattedPhone,
-        message: text,
-        from: senderProfile,
-        type: "sms",
+        messages: [
+          {
+            to: formattedPhone,
+            text: text,
+            sender: senderProfile,
+            serviceId: serviceId,
+          },
+        ],
       },
       {
         headers: {
-          Authorization: `Bearer ${apiKeyMTarget}`,
+          Authorization: `Basic ${apiKeyMTarget}`,
           "Content-Type": "application/json",
         },
       }
     );
 
+    console.log("M-Target response:", response.data);
+
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        messageId: response.data.id || response.data.message_id,
+        messageId: response.data.id || response.data.message_id || "sent",
       }),
     };
   } catch (error) {
     console.error("Erreur M-Target:", error.response?.data || error.message);
 
-    // Si c'est une erreur de configuration, retourner un message utile
     if (error.response?.status === 401) {
       return {
         statusCode: 401,
         body: JSON.stringify({
           success: false,
-          error:
-            "Erreur d'authentification M-Target. Vérifiez votre clé API.",
+          error: "Erreur d'authentification M-Target. Vérifiez vos identifiants.",
         }),
       };
     }
