@@ -1,5 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
-
 export const handler = async (event) => {
   console.log("📥 save-conversation called");
   
@@ -14,13 +12,8 @@ export const handler = async (event) => {
     const { phoneNumber, messages } = JSON.parse(event.body);
     console.log(`💾 Sauvegarde conversation pour ${phoneNumber}`);
 
-    // Récupérer les variables
     const supabaseUrl = process.env.VITE_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SECRET_KEY;
-
-    console.log("🔐 Checking env vars:");
-    console.log("  URL:", supabaseUrl ? "✅" : "❌");
-    console.log("  KEY:", supabaseKey ? "✅" : "❌");
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error("Variables Supabase manquantes");
@@ -33,82 +26,101 @@ export const handler = async (event) => {
       };
     }
 
-    // Créer le client Supabase
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    console.log("✅ Supabase client créé");
-
-    // 1. Trouver ou créer le client
+    // 1. Chercher le client
     console.log("🔍 Searching client...");
-    let { data: client, error: clientError } = await supabase
-      .from("clients")
-      .select("id")
-      .eq("phone_number", phoneNumber)
-      .single();
+    let clientId;
+    
+    const clientRes = await fetch(
+      `${supabaseUrl}/rest/v1/clients?phone_number=eq.${phoneNumber}&select=id`,
+      {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`,
+        },
+      }
+    );
 
-    if (clientError && clientError.code !== "PGRST116") {
-      throw clientError;
-    }
+    const clients = await clientRes.json();
+    console.log("Clients response:", clients);
 
-    if (!client) {
+    if (Array.isArray(clients) && clients.length > 0) {
+      clientId = clients[0].id;
+      console.log(`✅ Client trouvé: ${clientId}`);
+    } else {
+      // Créer un nouveau client
       console.log("➕ Creating new client...");
-      const { data: newClient, error: createError } = await supabase
-        .from("clients")
-        .insert({ phone_number: phoneNumber })
-        .select("id")
-        .single();
+      const createRes = await fetch(`${supabaseUrl}/rest/v1/clients`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({ phone_number: phoneNumber }),
+      });
 
-      if (createError) throw createError;
-      client = newClient;
-      console.log(`✅ Nouveau client créé: ${client.id}`);
-    } else {
-      console.log(`✅ Client trouvé: ${client.id}`);
+      const newClient = await createRes.json();
+      clientId = newClient[0].id;
+      console.log(`✅ Client créé: ${clientId}`);
     }
 
-    // 2. Créer ou mettre à jour la conversation
+    // 2. Chercher la conversation
     console.log("🔍 Searching conversation...");
-    let { data: conversation, error: convError } = await supabase
-      .from("conversations")
-      .select("id")
-      .eq("client_id", client.id)
-      .eq("phone_number", phoneNumber)
-      .single();
+    const convRes = await fetch(
+      `${supabaseUrl}/rest/v1/conversations?client_id=eq.${clientId}&phone_number=eq.${phoneNumber}&select=id`,
+      {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`,
+        },
+      }
+    );
 
-    if (convError && convError.code !== "PGRST116") {
-      throw convError;
-    }
+    const conversations = await convRes.json();
+    let conversationId;
 
-    if (!conversation) {
-      console.log("➕ Creating new conversation...");
-      const { data: newConv, error: newConvError } = await supabase
-        .from("conversations")
-        .insert({
-          client_id: client.id,
-          phone_number: phoneNumber,
-        })
-        .select("id")
-        .single();
-
-      if (newConvError) throw newConvError;
-      conversation = newConv;
-      console.log(`✅ Nouvelle conversation créée: ${conversation.id}`);
+    if (Array.isArray(conversations) && conversations.length > 0) {
+      conversationId = conversations[0].id;
+      console.log(`✅ Conversation trouvée: ${conversationId}`);
     } else {
-      console.log(`✅ Conversation trouvée: ${conversation.id}`);
+      // Créer une nouvelle conversation
+      console.log("➕ Creating new conversation...");
+      const createConvRes = await fetch(`${supabaseUrl}/rest/v1/conversations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({
+          client_id: clientId,
+          phone_number: phoneNumber,
+        }),
+      });
+
+      const newConv = await createConvRes.json();
+      conversationId = newConv[0].id;
+      console.log(`✅ Conversation créée: ${conversationId}`);
     }
 
     // 3. Sauvegarder les messages
     console.log(`📝 Saving ${messages.length} messages...`);
     const messagesToInsert = messages.map((msg) => ({
-      conversation_id: conversation.id,
+      conversation_id: conversationId,
       direction: msg.type === "user" ? "inbound" : "outbound",
       text: msg.text,
       sender: msg.type === "user" ? "user" : "claude",
     }));
 
-    const { error: messagesError } = await supabase
-      .from("messages")
-      .insert(messagesToInsert);
-
-    if (messagesError) throw messagesError;
+    const saveRes = await fetch(`${supabaseUrl}/rest/v1/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": supabaseKey,
+        "Authorization": `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify(messagesToInsert),
+    });
 
     console.log(`✅ ${messages.length} messages sauvegardés`);
 
@@ -116,8 +128,8 @@ export const handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        conversationId: conversation.id,
-        clientId: client.id,
+        conversationId: conversationId,
+        clientId: clientId,
       }),
     };
   } catch (error) {
