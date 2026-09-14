@@ -9,34 +9,41 @@ export const handler = async (event) => {
   try {
     const { phoneNumber, text } = JSON.parse(event.body);
 
-    // Récupérer les variables d'environnement
-    const username = process.env.MTARGET_USERNAME || "aerochatel";
+    // Récupérer les variables d'environnement (OBLIGATOIRES)
+    const username = process.env.MTARGET_USERNAME;
     const password = process.env.MTARGET_PASSWORD;
     const serviceId = process.env.VITE_MTARGET_SERVICE_ID;
-    const sender = process.env.VITE_MTARGET_SENDER_PROFILE || "AERO 91";
-    const apiUrl = process.env.VITE_MTARGET_API_URL || "https://api-public-2.mtarget.fr/messages";
+    const sender = process.env.VITE_MTARGET_SENDER_PROFILE;
+    const apiUrl = process.env.VITE_MTARGET_API_URL;
 
-    if (!phoneNumber || !text || !password) {
+    // Vérifier que tout est configuré
+    if (!username || !password || !serviceId || !sender || !apiUrl) {
       return {
         statusCode: 400,
         body: JSON.stringify({
-          error: "phoneNumber, text, et password requis",
+          error: "Variables d'environnement M-Target manquantes",
         }),
       };
     }
 
-    // Formater le numéro : enlever tous les caractères sauf les chiffres
+    if (!phoneNumber || !text) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: "phoneNumber et text requis",
+        }),
+      };
+    }
+
+    // Formater le numéro
     let msisdn = phoneNumber.replace(/\D/g, "");
-    
-    // Si commence par 33 (France +33), garder tel quel
-    // Si commence par 0, remplacer par 33
     if (msisdn.startsWith("0")) {
       msisdn = "33" + msisdn.substring(1);
     }
 
-    console.log(`Envoi SMS à ${msisdn} via M-Target`);
+    console.log(`Envoi SMS à ${msisdn}`);
 
-    // Construire l'URL avec les paramètres de query
+    // Construire l'URL avec les paramètres
     const url = new URL(apiUrl);
     url.searchParams.append("username", username);
     url.searchParams.append("password", password);
@@ -44,8 +51,6 @@ export const handler = async (event) => {
     url.searchParams.append("msg", text);
     url.searchParams.append("serviceid", serviceId);
     url.searchParams.append("sender", sender);
-
-    console.log(`URL (sans password): ${url.toString().replace(password, "***")}`);
 
     // Faire la requête GET
     const response = await fetch(url.toString());
@@ -58,7 +63,7 @@ export const handler = async (event) => {
         statusCode: response.status,
         body: JSON.stringify({
           success: false,
-          error: `Erreur HTTP ${response.status}`,
+          error: `Erreur M-Target ${response.status}`,
           details: data,
         }),
       };
