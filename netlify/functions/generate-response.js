@@ -45,7 +45,7 @@ export const handler = async (event) => {
     }
 
     const response = await client.messages.create({
-      model: "claude-opus-4-1",
+      model: "claude-opus-5",
       max_tokens: 1024,
       system: `Tu es un assistant SMS amical et professionnel pour une entreprise automobile. 
 Tu réponds brièvement et clairement (max 160 caractères pour respecter les limites SMS).
