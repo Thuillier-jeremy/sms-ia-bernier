@@ -1,11 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SECRET_KEY
-);
-
 export const handler = async (event) => {
+  console.log("📥 save-conversation called");
+  
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -15,6 +12,19 @@ export const handler = async (event) => {
 
   try {
     const { phoneNumber, messages } = JSON.parse(event.body);
+    console.log(`💾 Sauvegarde conversation pour ${phoneNumber}`);
+
+    // Récupérer les variables
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SECRET_KEY;
+
+    console.log("🔐 Checking env vars:");
+    console.log("  URL:", supabaseUrl ? "✅" : "❌");
+    console.log("  KEY:", supabaseKey ? "✅" : "❌");
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Variables Supabase manquantes");
+    }
 
     if (!phoneNumber || !messages) {
       return {
@@ -23,9 +33,12 @@ export const handler = async (event) => {
       };
     }
 
-    console.log(`💾 Sauvegarde conversation pour ${phoneNumber}`);
+    // Créer le client Supabase
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log("✅ Supabase client créé");
 
     // 1. Trouver ou créer le client
+    console.log("🔍 Searching client...");
     let { data: client, error: clientError } = await supabase
       .from("clients")
       .select("id")
@@ -37,6 +50,7 @@ export const handler = async (event) => {
     }
 
     if (!client) {
+      console.log("➕ Creating new client...");
       const { data: newClient, error: createError } = await supabase
         .from("clients")
         .insert({ phone_number: phoneNumber })
@@ -46,9 +60,12 @@ export const handler = async (event) => {
       if (createError) throw createError;
       client = newClient;
       console.log(`✅ Nouveau client créé: ${client.id}`);
+    } else {
+      console.log(`✅ Client trouvé: ${client.id}`);
     }
 
     // 2. Créer ou mettre à jour la conversation
+    console.log("🔍 Searching conversation...");
     let { data: conversation, error: convError } = await supabase
       .from("conversations")
       .select("id")
@@ -61,6 +78,7 @@ export const handler = async (event) => {
     }
 
     if (!conversation) {
+      console.log("➕ Creating new conversation...");
       const { data: newConv, error: newConvError } = await supabase
         .from("conversations")
         .insert({
@@ -73,9 +91,12 @@ export const handler = async (event) => {
       if (newConvError) throw newConvError;
       conversation = newConv;
       console.log(`✅ Nouvelle conversation créée: ${conversation.id}`);
+    } else {
+      console.log(`✅ Conversation trouvée: ${conversation.id}`);
     }
 
     // 3. Sauvegarder les messages
+    console.log(`📝 Saving ${messages.length} messages...`);
     const messagesToInsert = messages.map((msg) => ({
       conversation_id: conversation.id,
       direction: msg.type === "user" ? "inbound" : "outbound",
@@ -101,6 +122,7 @@ export const handler = async (event) => {
     };
   } catch (error) {
     console.error("💥 Erreur save-conversation:", error.message);
+    console.error("Stack:", error.stack);
 
     return {
       statusCode: 500,
