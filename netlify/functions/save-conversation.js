@@ -12,7 +12,7 @@ export const handler = async (event) => {
     const { phoneNumber, messages } = JSON.parse(event.body);
     console.log(`💾 Sauvegarde conversation pour ${phoneNumber}`);
 
-    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
