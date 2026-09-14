@@ -1,0 +1,148 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #fff;
+}
+
+.app-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.app-header h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+.config-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.config-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.app-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 300px;
+  background: #f8f9fa;
+  border-right: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.new-conversation-btn {
+  margin: 1rem;
+  padding: 0.8rem 1.2rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.new-conversation-btn:hover {
+  background: #5568d3;
+}
+
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.empty-state-content {
+  text-align: center;
+  padding: 2rem;
+}
+
+.empty-state-content h2 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.empty-state-content p {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 2rem;
+  max-width: 400px;
+}
+
+.primary-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.primary-btn:hover {
+  background: #5568d3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: 200px;
+    border-right: none;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .app-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+}
