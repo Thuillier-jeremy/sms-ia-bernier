@@ -167,11 +167,16 @@ function App() {
     }
   }
 
-  const handleNewConversation = () => {
-    setSelectedConversation(null)
-    setMessages([])
+const handleNewConversation = () => {
+  const newConv = {
+    id: Date.now(),
+    phoneNumber: '',
+    createdAt: new Date().toISOString(),
+    messages: []
   }
-
+  setSelectedConversation(newConv)
+  setMessages([])
+}
   return (
     <div className="app">
       <header className="app-header">
