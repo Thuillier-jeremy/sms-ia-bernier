@@ -7,7 +7,12 @@ export const handler = async (event) => {
   }
 
   try {
-    const { phoneNumber, text } = JSON.parse(event.body);
+    let { phoneNumber, text } = JSON.parse(event.body);
+
+// Si le message est vide ou trop court, ajouter du contenu
+if (!text || text.trim().length < 15) {
+  text = "Bonjour, ceci est un message de test depuis votre assistant SMS. Cordialement, Aero91.";
+}
 
     // Récupérer les variables d'environnement (OBLIGATOIRES)
     const username = process.env.MTARGET_USERNAME;
