@@ -1,4 +1,4 @@
-exports.handler = async (event) => {
+export const handler = async (event) => {
   console.log("📥 save-conversation called");
   
   if (event.httpMethod !== "POST") {
