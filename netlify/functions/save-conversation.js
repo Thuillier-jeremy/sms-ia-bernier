@@ -33,7 +33,7 @@ export const handler = async (event) => {
     }
 
     // Test simple
-    const testUrl = `${supabaseUrl}/rest/v1/clients?select=count`;
+    const testUrl = `https://jsonplaceholder.typicode.com/todos/1`;
     console.log("🌐 Test URL:", testUrl);
     
     console.log("🚀 Starting fetch...");
