@@ -33,12 +33,23 @@ export default function ConversationHistory() {
   const formatDate = (timestamp) => {
     if (!timestamp) return 'Date inconnue'
     try {
-      const date = new Date(parseInt(timestamp))
-      if (isNaN(date.getTime())) return 'Date invalide'
+      const ts = parseInt(timestamp)
+      if (isNaN(ts)) return 'Date invalide'
+      const date = new Date(ts)
       return date.toLocaleString('fr-FR')
     } catch (e) {
       return 'Date invalide'
     }
+  }
+
+  const getMessagesArray = (messagesData) => {
+    if (!messagesData) return []
+    if (Array.isArray(messagesData)) return messagesData
+    // Si Firebase a converti le tableau en objet
+    if (typeof messagesData === 'object') {
+      return Object.values(messagesData)
+    }
+    return []
   }
 
   if (loading) {
@@ -80,31 +91,35 @@ export default function ConversationHistory() {
             <>
               <h3>Messages de {selectedPhone}</h3>
               <div className="messages-list">
-                {Object.entries(conversations[selectedPhone] || {}).map(([key, conv]) => (
-                  <div key={key} className="conversation-block">
-                    <div className="conv-header">
-                      🕐 {formatDate(conv.timestamp)}
-                      <span className="msg-count">({conv.messageCount || 0} messages)</span>
+                {Object.entries(conversations[selectedPhone] || {}).map(([key, conv]) => {
+                  const messagesArray = getMessagesArray(conv.messages)
+                  
+                  return (
+                    <div key={key} className="conversation-block">
+                      <div className="conv-header">
+                        🕐 {formatDate(conv.timestamp)}
+                        <span className="msg-count">({messagesArray.length} messages)</span>
+                      </div>
+                      <div className="conv-messages">
+                        {messagesArray.length > 0 ? (
+                          messagesArray.map((msg, idx) => (
+                            <div key={idx} className={`message ${msg.type}`}>
+                              <span className="sender">
+                                {msg.type === 'user' ? '👤 Client' : '🤖 Claude'}
+                              </span>
+                              <span className="text">{msg.text}</span>
+                              <span className="time">
+                                {formatDate(msg.timestamp)}
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="no-messages">Aucun message</p>
+                        )}
+                      </div>
                     </div>
-                    <div className="conv-messages">
-                      {conv.messages && Array.isArray(conv.messages) ? (
-                        conv.messages.map((msg, idx) => (
-                          <div key={idx} className={`message ${msg.type}`}>
-                            <span className="sender">
-                              {msg.type === 'user' ? '👤 Client' : '🤖 Claude'}
-                            </span>
-                            <span className="text">{msg.text}</span>
-                            <span className="time">
-                              {formatDate(msg.timestamp)}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <p>Aucun message</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </>
           ) : (
