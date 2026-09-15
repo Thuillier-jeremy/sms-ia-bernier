@@ -1,11 +1,7 @@
 export const handler = async (event) => {
   console.log("🚨 WEBHOOK APPELÉ !");
-  console.log("📥 Méthode HTTP:", event.httpMethod);
-  console.log("📥 Params:", event.queryStringParameters);
-  console.log("📥 Headers:", event.headers);
   console.log("📥 Body:", event.body);
-  console.log("📥 Body type:", typeof event.body);
-  
+  console.log("📥 Headers:", event.headers);
   
   if (event.httpMethod !== "POST") {
     return {
@@ -15,20 +11,16 @@ export const handler = async (event) => {
   }
 
   try {
-    // M-Target envoie les données en query params ou body
-    const params = event.queryStringParameters || {};
-    const body = event.body ? JSON.parse(event.body) : {};
-
-    console.log("📥 Params:", params);
-    console.log("📥 Body:", body);
-
-    // Récupérer le numéro et le message
-    const phoneNumber = params.msisdn || body.msisdn || params.from || body.from || '';
-    const message = params.msg || body.msg || params.message || body.message || '';
-
+    // M-Target envoie en form-urlencoded
+    const params = new URLSearchParams(event.body);
+    
+    const phoneNumber = params.get('Msisdn') || '';
+    const message = params.get('Content') || '';
+    
     console.log(`📱 SMS de ${phoneNumber}: ${message}`);
 
     if (!phoneNumber || !message) {
+      console.log("⚠️ Missing phone or message");
       return {
         statusCode: 400,
         body: JSON.stringify({ error: "Missing phoneNumber or message" }),
