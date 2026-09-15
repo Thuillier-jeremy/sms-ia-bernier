@@ -33,16 +33,12 @@ export const handler = async (event) => {
     }
 
     // Test simple
-    const testUrl = `${supabaseUrl}/rest/v1/clients?select=count`;
+    const testUrl = `${supabaseUrl}/rest/v1/`;
     console.log("🌐 Test URL:", testUrl);
     
     console.log("🚀 Starting fetch...");
     const testRes = await fetch(testUrl, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${supabaseKey}`,
-      },
     });
     
     console.log("✅ Fetch succeeded!");
