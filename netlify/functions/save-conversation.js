@@ -49,7 +49,7 @@ export const handler = async (event) => {
     };
 
     const response = await fetch(firebaseUrl, {
-      method: "POST",
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
