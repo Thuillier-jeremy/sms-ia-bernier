@@ -1,5 +1,11 @@
 export const handler = async (event) => {
-  console.log("📱 Webhook SMS reçu");
+  console.log("🚨 WEBHOOK APPELÉ !");
+  console.log("📥 Méthode HTTP:", event.httpMethod);
+  console.log("📥 Params:", event.queryStringParameters);
+  console.log("📥 Headers:", event.headers);
+  console.log("📥 Body:", event.body);
+  console.log("📥 Body type:", typeof event.body);
+  
   
   if (event.httpMethod !== "POST") {
     return {
