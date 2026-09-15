@@ -17,45 +17,51 @@ export default function ConversationHistory() {
       const response = await fetch('/api/get-conversations')
       const data = await response.json()
 
+      console.log('📥 Raw API response:', data)
+
       if (data.success) {
         setConversations(data.conversations || {})
-        console.log('✅ Conversations chargées:', data.conversations)
+        console.log('✅ Conversations set:', data.conversations)
+        console.log('📊 Phone numbers:', Object.keys(data.conversations || {}))
       } else {
         setError(data.error)
       }
     } catch (err) {
       setError('Erreur lors du chargement: ' + err.message)
+      console.error('❌ Fetch error:', err)
     } finally {
       setLoading(false)
     }
   }
 
   const formatDate = (timestamp) => {
+    console.log('🕐 Formatting timestamp:', timestamp, 'type:', typeof timestamp)
     if (!timestamp) return 'Date inconnue'
     try {
       let date
       
-      // Si c'est un string ISO
       if (typeof timestamp === 'string') {
         date = new Date(timestamp)
       } else {
-        // Si c'est un nombre
         date = new Date(parseInt(timestamp))
       }
       
       if (isNaN(date.getTime())) return 'Date invalide'
       return date.toLocaleString('fr-FR')
     } catch (e) {
+      console.error('❌ Date format error:', e)
       return 'Date invalide'
     }
   }
 
   const getMessagesArray = (messagesData) => {
+    console.log('📝 Processing messages:', messagesData)
     if (!messagesData) return []
     if (Array.isArray(messagesData)) return messagesData
-    // Si c'est un objet (Firebase convertit les arrays)
     if (typeof messagesData === 'object') {
-      return Object.values(messagesData)
+      const arr = Object.values(messagesData)
+      console.log('✅ Converted to array:', arr)
+      return arr
     }
     return []
   }
@@ -69,13 +75,13 @@ export default function ConversationHistory() {
   }
 
   const phoneNumbers = Object.keys(conversations || {})
+  console.log('📱 Phone numbers for display:', phoneNumbers)
 
   return (
     <div className="conversation-history">
       <h2>📋 Historique des Conversations</h2>
       
       <div className="conversations-container">
-        {/* Liste des numéros */}
         <div className="phone-list">
           <h3>Numéros ({phoneNumbers.length})</h3>
           {phoneNumbers.length === 0 ? (
@@ -85,7 +91,10 @@ export default function ConversationHistory() {
               <div
                 key={phone}
                 className={`phone-item ${selectedPhone === phone ? 'active' : ''}`}
-                onClick={() => setSelectedPhone(phone)}
+                onClick={() => {
+                  console.log('📱 Selected phone:', phone)
+                  setSelectedPhone(phone)
+                }}
               >
                 📞 {phone}
               </div>
@@ -93,41 +102,48 @@ export default function ConversationHistory() {
           )}
         </div>
 
-        {/* Messages du numéro sélectionné */}
         <div className="messages-view">
           {selectedPhone ? (
             <>
               <h3>Messages de {selectedPhone}</h3>
               <div className="messages-list">
-                {Object.entries(conversations[selectedPhone] || {}).map(([key, conv]) => {
-                  const messagesArray = getMessagesArray(conv.messages)
+                {(() => {
+                  console.log('🔍 Current conversations data:', conversations)
+                  console.log('🔍 Data for selected phone:', conversations[selectedPhone])
+                  const entries = Object.entries(conversations[selectedPhone] || {})
+                  console.log('🔍 Entries:', entries)
                   
-                  return (
-                    <div key={key} className="conversation-block">
-                      <div className="conv-header">
-                        🕐 {formatDate(conv.timestamp)}
-                        <span className="msg-count">({messagesArray.length} messages)</span>
+                  return entries.map(([key, conv]) => {
+                    console.log('📌 Processing conversation:', key, conv)
+                    const messagesArray = getMessagesArray(conv.messages)
+                    
+                    return (
+                      <div key={key} className="conversation-block">
+                        <div className="conv-header">
+                          🕐 {formatDate(conv.timestamp)}
+                          <span className="msg-count">({messagesArray.length} messages)</span>
+                        </div>
+                        <div className="conv-messages">
+                          {messagesArray.length > 0 ? (
+                            messagesArray.map((msg, idx) => (
+                              <div key={idx} className={`message ${msg.type}`}>
+                                <span className="sender">
+                                  {msg.type === 'user' ? '👤 Client' : '🤖 Claude'}
+                                </span>
+                                <span className="text">{msg.text}</span>
+                                <span className="time">
+                                  {formatDate(msg.timestamp)}
+                                </span>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="no-messages">Aucun message</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="conv-messages">
-                        {messagesArray.length > 0 ? (
-                          messagesArray.map((msg, idx) => (
-                            <div key={idx} className={`message ${msg.type}`}>
-                              <span className="sender">
-                                {msg.type === 'user' ? '👤 Client' : '🤖 Claude'}
-                              </span>
-                              <span className="text">{msg.text}</span>
-                              <span className="time">
-                                {formatDate(msg.timestamp)}
-                              </span>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="no-messages">Aucun message</p>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })
+                })()}
               </div>
             </>
           ) : (
