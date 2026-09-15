@@ -33,9 +33,17 @@ export default function ConversationHistory() {
   const formatDate = (timestamp) => {
     if (!timestamp) return 'Date inconnue'
     try {
-      const ts = parseInt(timestamp)
-      if (isNaN(ts)) return 'Date invalide'
-      const date = new Date(ts)
+      let date
+      
+      // Si c'est un string ISO
+      if (typeof timestamp === 'string') {
+        date = new Date(timestamp)
+      } else {
+        // Si c'est un nombre
+        date = new Date(parseInt(timestamp))
+      }
+      
+      if (isNaN(date.getTime())) return 'Date invalide'
       return date.toLocaleString('fr-FR')
     } catch (e) {
       return 'Date invalide'
@@ -45,7 +53,7 @@ export default function ConversationHistory() {
   const getMessagesArray = (messagesData) => {
     if (!messagesData) return []
     if (Array.isArray(messagesData)) return messagesData
-    // Si Firebase a converti le tableau en objet
+    // Si c'est un objet (Firebase convertit les arrays)
     if (typeof messagesData === 'object') {
       return Object.values(messagesData)
     }
