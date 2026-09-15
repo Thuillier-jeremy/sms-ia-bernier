@@ -1,0 +1,158 @@
+.conversation-history {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.conversation-history h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 28px;
+  color: #333;
+}
+
+.conversations-container {
+  display: flex;
+  gap: 20px;
+  height: 600px;
+}
+
+.phone-list {
+  flex: 0 0 250px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  background: #f9f9f9;
+  overflow-y: auto;
+}
+
+.phone-list h3 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  color: #555;
+}
+
+.phone-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.phone-item:hover {
+  background: #f0f0f0;
+  border-color: #007bff;
+}
+
+.phone-item.active {
+  background: #007bff;
+  color: white;
+  border-color: #0056b3;
+}
+
+.messages-view {
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  background: white;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.messages-view h3 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  color: #555;
+}
+
+.messages-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.conversation-block {
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.conv-header {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.msg-count {
+  font-size: 12px;
+  color: #888;
+  font-weight: normal;
+}
+
+.conv-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.message {
+  padding: 10px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.message.user {
+  background: #e3f2fd;
+  margin-left: 20px;
+}
+
+.message.assistant {
+  background: #f3e5f5;
+  margin-right: 20px;
+}
+
+.message .sender {
+  font-weight: bold;
+  font-size: 12px;
+  color: #555;
+}
+
+.message .text {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.message .time {
+  font-size: 10px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.no-selection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+  font-size: 16px;
+}
+
+.error {
+  background: #ffebee;
+  color: #c62828;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}

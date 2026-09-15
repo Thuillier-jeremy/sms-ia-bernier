@@ -3,18 +3,20 @@ import './App.css'
 import ConversationsList from './components/ConversationsList'
 import ChatWindow from './components/ChatWindow'
 import ConfigPanel from './components/ConfigPanel'
+import ConversationHistory from './components/ConversationHistory'
 
 function App() {
   const [conversations, setConversations] = useState([])
   const [selectedConversation, setSelectedConversation] = useState(null)
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
+  const [showConfig, setShowConfig] = useState(!localStorage.getItem('apiKeyAnthropic'))
+  const [showHistory, setShowHistory] = useState(false)
   const [config, setConfig] = useState({
     apiKeyAnthropic: localStorage.getItem('apiKeyAnthropic') || '',
     apiKeyMTarget: localStorage.getItem('apiKeyMTarget') || '',
     senderProfile: localStorage.getItem('senderProfile') || '',
   })
-  const [showConfig, setShowConfig] = useState(!config.apiKeyAnthropic)
   const messagesEndRef = useRef(null)
 
   // Charger les conversations sauvegardées
@@ -90,7 +92,7 @@ function App() {
         const messagesWithAI = [...updatedMessages, aiMessage]
         setMessages(messagesWithAI)
 
-        // ✅ SAUVEGARDER DANS SUPABASE
+        // ✅ SAUVEGARDER DANS FIREBASE
         try {
           await fetch('/api/save-conversation', {
             method: 'POST',
@@ -100,9 +102,9 @@ function App() {
               messages: messagesWithAI
             })
           })
-          console.log('✅ Conversation sauvegardée dans Supabase')
+          console.log('✅ Conversation sauvegardée dans Firebase')
         } catch (error) {
-          console.error('❌ Erreur sauvegarde Supabase:', error)
+          console.error('❌ Erreur sauvegarde Firebase:', error)
         }
 
         // Sauvegarder la conversation en localStorage aussi
@@ -167,27 +169,42 @@ function App() {
     }
   }
 
-const handleNewConversation = () => {
-  const newConv = {
-    id: Date.now(),
-    phoneNumber: '',
-    createdAt: new Date().toISOString(),
-    messages: []
+  const handleNewConversation = () => {
+    const newConv = {
+      id: Date.now(),
+      phoneNumber: '',
+      createdAt: new Date().toISOString(),
+      messages: []
+    }
+    setSelectedConversation(newConv)
+    setMessages([])
   }
-  setSelectedConversation(newConv)
-  setMessages([])
-}
+
   return (
     <div className="app">
       <header className="app-header">
         <div className="header-content">
           <h1>SMS Conversationnel IA</h1>
-          <button 
-            className="config-btn"
-            onClick={() => setShowConfig(!showConfig)}
-          >
-            ⚙️ Configuration
-          </button>
+          <div className="header-buttons">
+            <button 
+              className={`config-btn ${!showHistory ? 'active' : 'inactive'}`}
+              onClick={() => setShowHistory(false)}
+            >
+              💬 Chat
+            </button>
+            <button 
+              className={`config-btn ${showHistory ? 'active' : 'inactive'}`}
+              onClick={() => setShowHistory(true)}
+            >
+              📋 Historique
+            </button>
+            <button 
+              className="config-btn"
+              onClick={() => setShowConfig(!showConfig)}
+            >
+              ⚙️ Configuration
+            </button>
+          </div>
         </div>
       </header>
 
@@ -199,46 +216,50 @@ const handleNewConversation = () => {
         />
       )}
 
-      <div className="app-container">
-        <aside className="sidebar">
-          <button 
-            className="new-conversation-btn"
-            onClick={handleNewConversation}
-          >
-            + Nouvelle conversation
-          </button>
-          <ConversationsList
-            conversations={conversations}
-            selectedId={selectedConversation?.id}
-            onSelect={selectConversation}
-          />
-        </aside>
-
-        <main className="chat-area">
-          {selectedConversation || messages.length > 0 ? (
-            <ChatWindow
-              messages={messages}
-              loading={loading}
-              phoneNumber={selectedConversation?.phoneNumber}
-              onSendMessage={handleSendMessage}
-              messagesEndRef={messagesEndRef}
+      {showHistory ? (
+        <ConversationHistory />
+      ) : (
+        <div className="app-container">
+          <aside className="sidebar">
+            <button 
+              className="new-conversation-btn"
+              onClick={handleNewConversation}
+            >
+              + Nouvelle conversation
+            </button>
+            <ConversationsList
+              conversations={conversations}
+              selectedId={selectedConversation?.id}
+              onSelect={selectConversation}
             />
-          ) : (
-            <div className="empty-state">
-              <div className="empty-state-content">
-                <h2>Bienvenue</h2>
-                <p>Démarrez une nouvelle conversation ou sélectionnez-en une existante.</p>
-                <button 
-                  className="primary-btn"
-                  onClick={handleNewConversation}
-                >
-                  Commencer une conversation
-                </button>
+          </aside>
+
+          <main className="chat-area">
+            {selectedConversation || messages.length > 0 ? (
+              <ChatWindow
+                messages={messages}
+                loading={loading}
+                phoneNumber={selectedConversation?.phoneNumber}
+                onSendMessage={handleSendMessage}
+                messagesEndRef={messagesEndRef}
+              />
+            ) : (
+              <div className="empty-state">
+                <div className="empty-state-content">
+                  <h2>Bienvenue</h2>
+                  <p>Démarrez une nouvelle conversation ou sélectionnez-en une existante.</p>
+                  <button 
+                    className="primary-btn"
+                    onClick={handleNewConversation}
+                  >
+                    Commencer une conversation
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </main>
-      </div>
+            )}
+          </main>
+        </div>
+      )}
     </div>
   )
 }

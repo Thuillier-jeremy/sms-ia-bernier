@@ -146,3 +146,17 @@
     align-items: flex-start;
   }
 }
+
+.header-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.config-btn.active {
+  background: #007bff;
+  color: white;
+}
+
+.config-btn.inactive {
+  opacity: 0.5;
+}
