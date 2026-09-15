@@ -13,7 +13,7 @@ export const handler = async (event) => {
     console.log(`💾 Sauvegarde conversation pour ${phoneNumber}`);
 
     const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+    const supabaseKey = process.env.SUPABASE_ANON_JWT;
 
     console.log("🔐 URL check:", supabaseUrl ? "✅" : "❌");
     console.log("🔐 KEY check:", supabaseKey ? "✅" : "❌");
@@ -33,15 +33,15 @@ export const handler = async (event) => {
     }
 
     // Test simple
-    const testUrl = `https://jsonplaceholder.typicode.com/todos/1`;
+    const testUrl = `${supabaseUrl}/rest/v1/clients?select=count`;
     console.log("🌐 Test URL:", testUrl);
     
     console.log("🚀 Starting fetch...");
     const testRes = await fetch(testUrl, {
       method: "GET",
       headers: {
-        "apikey": supabaseKey,
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${supabaseKey}`,
       },
     });
     
