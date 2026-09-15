@@ -30,6 +30,17 @@ export default function ConversationHistory() {
     }
   }
 
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'Date inconnue'
+    try {
+      const date = new Date(parseInt(timestamp))
+      if (isNaN(date.getTime())) return 'Date invalide'
+      return date.toLocaleString('fr-FR')
+    } catch (e) {
+      return 'Date invalide'
+    }
+  }
+
   if (loading) {
     return <div className="conversation-history"><p>⏳ Chargement des conversations...</p></div>
   }
@@ -42,7 +53,7 @@ export default function ConversationHistory() {
 
   return (
     <div className="conversation-history">
-      <h2>📱 Historique des Conversations</h2>
+      <h2>📋 Historique des Conversations</h2>
       
       <div className="conversations-container">
         {/* Liste des numéros */}
@@ -72,21 +83,25 @@ export default function ConversationHistory() {
                 {Object.entries(conversations[selectedPhone] || {}).map(([key, conv]) => (
                   <div key={key} className="conversation-block">
                     <div className="conv-header">
-                      🕐 {new Date(conv.timestamp).toLocaleString('fr-FR')}
-                      <span className="msg-count">({conv.messageCount} messages)</span>
+                      🕐 {formatDate(conv.timestamp)}
+                      <span className="msg-count">({conv.messageCount || 0} messages)</span>
                     </div>
                     <div className="conv-messages">
-                      {conv.messages && conv.messages.map((msg, idx) => (
-                        <div key={idx} className={`message ${msg.type}`}>
-                          <span className="sender">
-                            {msg.type === 'user' ? '👤 Client' : '🤖 Claude'}
-                          </span>
-                          <span className="text">{msg.text}</span>
-                          <span className="time">
-                            {new Date(msg.timestamp).toLocaleTimeString('fr-FR')}
-                          </span>
-                        </div>
-                      ))}
+                      {conv.messages && Array.isArray(conv.messages) ? (
+                        conv.messages.map((msg, idx) => (
+                          <div key={idx} className={`message ${msg.type}`}>
+                            <span className="sender">
+                              {msg.type === 'user' ? '👤 Client' : '🤖 Claude'}
+                            </span>
+                            <span className="text">{msg.text}</span>
+                            <span className="time">
+                              {formatDate(msg.timestamp)}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <p>Aucun message</p>
+                      )}
                     </div>
                   </div>
                 ))}
